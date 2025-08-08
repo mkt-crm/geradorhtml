@@ -106,8 +106,8 @@ st.image("https://superbid.net/logo.png", width=120)
 st.title("Gerador de Cards para E-mail - Superbid")
 st.markdown("Cole abaixo os **links dos eventos** (um por linha) e clique em **Gerar Cards**.")
 
-links_input = st.text_area("Links dos eventos", height=200, placeholder="https://superbid.net/evento/123")
-https://superbid.net/evento/456")
+links_input = st.text_area("Links dos eventos", height=200, placeholder="""https://superbid.net/evento/123
+https://superbid.net/evento/456""")
 
 if st.button("🚀 Gerar Cards"):
     links = [l.strip() for l in links_input.splitlines() if l.strip()]
