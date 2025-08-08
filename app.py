@@ -1,10 +1,12 @@
+
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
 from io import BytesIO
 
-# ========== CONFIG ==========
+# ========== CONFIGURAÇÕES ==========
+
 st.set_page_config(page_title="Gerador de Cards Superbid", layout="centered")
 
 UTM_PARAMS = {
@@ -31,6 +33,8 @@ HTML_FOOTER = """
   <p>© 2025 Superbid. Todos os direitos reservados.</p>
 </div>
 """
+
+# ========== FUNÇÕES ==========
 
 def extrair_info(url):
     try:
@@ -96,30 +100,32 @@ def gerar_html_final(cards_list):
 </body>
 </html>"""
 
+# ========== INTERFACE ==========
+
 st.image("https://superbid.net/logo.png", width=120)
 st.title("Gerador de Cards para E-mail - Superbid")
 st.markdown("Cole abaixo os **links dos eventos** (um por linha) e clique em **Gerar Cards**.")
 
-links_input = st.text_area("Links dos eventos", height=200, placeholder="https://superbid.net/evento/123\nhttps://superbid.net/evento/456")
+links_input = st.text_area("Links dos eventos", height=200, placeholder="https://superbid.net/evento/123
+https://superbid.net/evento/456")
 
 if st.button("🚀 Gerar Cards"):
     links = [l.strip() for l in links_input.splitlines() if l.strip()]
-    cards_html = ""
+    cards_html = []
     for link in links:
         info = extrair_info(link)
         if info:
-            cards_html += gerar_card(info)
-    
+            cards_html.append(gerar_card(info))
+
     html_final = gerar_html_final(cards_html)
-    st.success("HTML gerado com sucesso!")
+    st.success("✅ HTML gerado com sucesso!")
 
     with st.expander("📄 Visualizar HTML"):
-        st.components.v1.html(html_final, height=1000, scrolling=True)
-
+        st.components.v1.html(html_final, height=1200, scrolling=True)
 
     st.download_button(
         label="📥 Baixar HTML",
-data=BytesIO(html_final.encode('utf-8')),
+        data=BytesIO(html_final.encode("utf-8")),
         file_name="email.html",
         mime="text/html"
     )
