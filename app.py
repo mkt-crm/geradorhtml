@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
-from io import StringIO
+from io import BytesIO
 
 # ========== CONFIG ==========
 st.set_page_config(page_title="Gerador de Cards Superbid", layout="centered")
@@ -117,7 +117,7 @@ if st.button("🚀 Gerar Cards"):
 
     st.download_button(
         label="📥 Baixar HTML",
-        data=StringIO(html_final),
+data=BytesIO(html_final.encode('utf-8')),
         file_name="email.html",
         mime="text/html"
     )
