@@ -14,30 +14,22 @@ UTM_PARAMS = {
 }
 
 HTML_HEADER = """
-<table width="100%" style="background-color: #f4f4f4; padding: 20px;">
-  <tr>
-    <td align="center">
-      <img src="https://superbid.net/logo.png" alt="Superbid Logo" width="120" />
-      <h2 style="margin-top: 10px;">Confira os eventos em destaque da semana</h2>
-    </td>
-  </tr>
-</table>
+<div style="max-width: 900px; margin: auto; text-align: center; background-color: #f7f7f7; padding: 30px 20px;">
+  <img src="https://cdn.superbid.net/assets/logo-superbid.png" alt="Superbid Exchange" width="180">
+  <h2 style="font-family: Arial, sans-serif; color: #333; margin-top: 10px;">Confira os eventos em destaque da semana</h2>
+</div>
 """
 
 HTML_FOOTER = """
-<table width="100%" style="background-color: #f4f4f4; padding: 20px; text-align: center; font-size: 12px;">
-  <tr>
-    <td>
-      <p>Você está recebendo este e-mail porque se inscreveu em nossos eventos.</p>
-      <p>
-        <a href="https://superbid.net">superbid.net</a> |
-        <a href="https://instagram.com/superbid">Instagram</a> |
-        <a href="https://linkedin.com/company/superbid">LinkedIn</a>
-      </p>
-      <p>© 2025 Superbid. Todos os direitos reservados.</p>
-    </td>
-  </tr>
-</table>
+<div style="max-width: 900px; margin: auto; padding: 20px; text-align: center; font-size: 12px; color: #888;">
+  <p>Você está recebendo este e-mail porque se inscreveu em nossos eventos.</p>
+  <p>
+    <a href="https://superbid.net" style="color: #555;">superbid.net</a> |
+    <a href="https://instagram.com/superbid" style="color: #555;">Instagram</a> |
+    <a href="https://linkedin.com/company/superbid" style="color: #555;">LinkedIn</a>
+  </p>
+  <p>© 2025 Superbid. Todos os direitos reservados.</p>
+</div>
 """
 
 def extrair_info(url):
@@ -69,28 +61,37 @@ def adicionar_parametros(url, params=UTM_PARAMS):
 def gerar_card(info):
     link_param = adicionar_parametros(info["link"])
     return f"""
-    <table width="100%" style="padding: 20px;">
-      <tr>
-        <td style="border: 1px solid #ccc; padding: 15px; border-radius: 10px;">
-          <img src="{info['imagem']}" alt="{info['titulo']}" width="100%" style="border-radius: 10px;" />
-          <h3>{info['titulo']}</h3>
-          <p>{info['descricao']}</p>
-          <a href="{link_param}"
-            style="display:inline-block; padding:10px 20px; background:#007bff; color:#fff; text-decoration:none; border-radius:5px;">
-            Ver Evento
-          </a>
-        </td>
-      </tr>
+    <td style="width: 30%; padding: 15px; vertical-align: top;">
+      <div style="border: 1px solid #ddd; border-radius: 10px; overflow: hidden; background: #fff; font-family: Arial, sans-serif;">
+        <img src="{info['imagem']}" alt="{info['titulo']}" style="width: 100%; height: auto; border-bottom: 1px solid #eee;">
+        <div style="padding: 15px;">
+          <h3 style="font-size: 16px; color: #333;">{info['titulo']}</h3>
+          <p style="font-size: 14px; color: #555;">{info['descricao']}</p>
+          <a href="{link_param}" style="display: inline-block; margin-top: 10px; background-color: #007bff; color: white; padding: 10px 16px; text-decoration: none; border-radius: 5px; font-weight: bold;">Ver Evento</a>
+        </div>
+      </div>
+    </td>
+    """
+
+def gerar_html_final(cards_list):
+    linhas = ""
+    for i in range(0, len(cards_list), 3):
+        grupo = cards_list[i:i+3]
+        linha = "<tr>" + "".join(grupo) + "</tr>"
+        linhas += linha
+
+    grid = f"""
+    <table width="100%" style="max-width: 900px; margin: auto;">
+      {linhas}
     </table>
     """
 
-def gerar_html_final(cards):
     return f"""<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><title>Eventos</title></head>
-<body style="font-family: Arial, sans-serif;">
+<body style="font-family: Arial, sans-serif; background-color: #f0f0f0; margin:0; padding:0;">
   {HTML_HEADER}
-  {cards}
+  {grid}
   {HTML_FOOTER}
 </body>
 </html>"""
