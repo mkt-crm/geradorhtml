@@ -114,7 +114,8 @@ if st.button("🚀 Gerar Cards"):
     st.success("HTML gerado com sucesso!")
 
     with st.expander("📄 Visualizar HTML"):
-        st.code(html_final, language='html')
+        st.components.v1.html(html_final, height=1000, scrolling=True)
+
 
     st.download_button(
         label="📥 Baixar HTML",
