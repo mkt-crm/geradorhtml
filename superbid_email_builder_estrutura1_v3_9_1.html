@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Builder de E-mail – Superbid (Estrutura 1) v3.9.1</title>
+<style>
+  :root{
+    --bg:#0b1320;
+    --panel:#0f1a2b;
+    --brand:#8800CB;
+    --brand2:#BE00FF;
+  }
+  body{margin:0;background:var(--bg);color:#e7ecf7;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1200px;margin:24px auto;padding:0 16px}
+  h1{font-size:22px;margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .card{background:var(--panel);border:1px solid #1c2941;border-radius:12px;padding:16px}
+  label{display:block;font-size:12px;color:#9db0c8;margin:10px 0 6px}
+  input,select,textarea{width:100%;background:#0b1528;border:1px solid #21304c;border-radius:10px;color:#e7ecf7;padding:12px 12px;font-size:14px;outline:none}
+  input[type="color"]{padding:0;height:44px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+  button{background:linear-gradient(45deg,var(--brand),var(--brand2));color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer}
+  .small{font-size:12px;color:#9db0c8}
+  .preview{white-space:pre-wrap;background:#040b16;border:1px dashed #243552;border-radius:12px;padding:12px;height:360px;overflow:auto;font:12px/1.35 ui-monospace,SFMono-Regular,Consolas,Menlo,monospace}
+  .vis{background:#fff;border-radius:12px;overflow:auto;max-height:720px}
+  .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}
+  .pill{background:#0b1528;border:1px solid #21304c;color:#cfe3ff;border-radius:999px;padding:6px 10px;font-size:12px}
+  .muted{color:#9db0c8}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Construtor de E-mail – Superbid (Estrutura 1) <span class="pill">v3.9.1</span></h1>
+
+    <div class="grid">
+      <div class="card">
+        <h3 style="margin-top:0">Tema & Cabeçalho</h3>
+        <div class="two">
+          <div>
+            <label>Cor primária (CTA)</label>
+            <input id="cor1" type="color" value="#8800cb">
+          </div>
+          <div>
+            <label>Cor primária (hover)</label>
+            <input id="cor2" type="color" value="#be00ff">
+          </div>
+        </div>
+        <label>Banner do Header (URL da imagem)</label>
+        <input id="bannerImg" placeholder="https://.../banner.png">
+        <label>Link do Banner</label>
+        <input id="bannerLink" placeholder="https://...">
+        <div class="small">O banner aparece logo abaixo do menu de categorias.</div>
+
+        <h3 style="margin:22px 0 8px">UTM & Layout</h3>
+        <div class="row">
+          <div>
+            <label>Data do disparo (UTM campaign)</label>
+            <input id="utmDate" type="date">
+          </div>
+          <div>
+            <label>Prefixo da campanha (fixo)</label>
+            <input id="utmPrefix" value="veiculos">
+          </div>
+        </div>
+        <label>Layout dos cards</label>
+        <select id="layout">
+          <option value="grid">Grid (3 por linha)</option>
+          <option value="vertical">Vertical (1 por linha)</option>
+        </select>
+
+        <h3 style="margin:22px 0 8px">Redes sociais (footer)</h3>
+        <div class="two">
+          <div>
+            <label>Facebook URL</label>
+            <input id="fbUrl" value="https://www.facebook.com/SuperbidBrasil/">
+          </div>
+          <div>
+            <label>LinkedIn URL</label>
+            <input id="inUrl" value="https://www.linkedin.com/company/superbid/">
+          </div>
+        </div>
+        <div class="two">
+          <div>
+            <label>Instagram URL</label>
+            <input id="igUrl" value="https://www.instagram.com/superbidbrasil/">
+          </div>
+          <div>
+            <label>WhatsApp (Yara) URL</label>
+            <input id="waUrl" value="https://api.whatsapp.com/send/?phone=551149509400">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Cards (até 8)</h3>
+        <div id="cards"></div>
+        <div class="btn-row" style="margin-top:10px">
+          <button id="add">+ Adicionar card</button>
+          <span class="muted small">Dica: imagens do evento em 600×350 px funcionam muito bem.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="btn-row">
+        <button id="gen">Gerar HTML</button>
+        <button id="copyCode">Copiar código</button>
+        <button id="copyVisual">Copiar preview (HTML)</button>
+      </div>
+      <div class="muted small">Cards com <b>altura uniforme</b> (imagem, logo e descrição com tamanhos fixos + truncamento).</div>
+    </div>
+
+    <div class="grid" style="margin-top:12px">
+      <div class="card">
+        <h3 style="margin-top:0">Preview (Visual)</h3>
+        <div id="visual" class="vis"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">Preview (Código)</h3>
+        <div id="code" class="preview"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const MAX_CARDS = 8;
+let cardCount = 0;
+
+const $ = sel => document.querySelector(sel);
+function h(html){const d=document.createElement('div');d.innerHTML=html.trim();return d.firstChild;}
+function fmt2(n){return n<10?('0'+n):n}
+function fmtDate(dateStr, timeStr){
+  try{
+    const d = new Date(dateStr+'T'+(timeStr||'00:00'));
+    const dd = fmt2(d.getDate());
+    const month = d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
+    const hh = fmt2(d.getHours());
+    const mm = fmt2(d.getMinutes());
+    return `${dd} ${month} - ${hh}:${mm}h`;
+  }catch(e){return ''}
+}
+
+function makeCard(id){
+  return h(`
+  <div class="card" data-id="${id}">
+    <div class="row">
+      <div><label>Link do evento</label><input class="evLink" placeholder="https://www.superbid.net/evento/123456"></div>
+      <div><label>Imagem do evento (URL)</label><input class="evImg" placeholder="https://.../evento.jpg"></div>
+    </div>
+    <div class="row">
+      <div><label>Logo do vendedor (URL)</label><input class="logo" placeholder="https://.../logo_vendedor.png"></div>
+      <div><label>Título/descrição curta</label><input class="desc" placeholder="Ex.: Caminhões, Reboques, Pá Carregadeiras..."></div>
+    </div>
+    <div class="row">
+      <div><label>Data de encerramento</label><input class="dd" type="date"></div>
+      <div><label>Hora de encerramento</label><input class="hh" type="time"></div>
+    </div>
+    <div class="row">
+      <div><label>Texto do CTA</label><input class="cta" value="APROVEITE"></div>
+      <div><label>Cor opcional do CTA</label><input class="ctaColor" type="color"></div>
+    </div>
+    <div class="btn-row" style="margin-top:8px">
+      <button onclick="this.closest('.card').remove();renumber()">Remover</button>
+    </div>
+  </div>`);
+}
+
+function addCard(){
+  if(cardCount>=MAX_CARDS) return alert('Limite de 8 cards.');
+  cardCount++;
+  $('#cards').appendChild(makeCard(cardCount));
+}
+
+function renumber(){
+  cardCount = [...document.querySelectorAll('#cards .card')].length;
+}
+
+$('#add').onclick = addCard;
+addCard();
+
+function truncate(text,max){
+  if(!text) return '';
+  const t = text.trim();
+  return (t.length>max)? (t.slice(0,max-1)+'…') : t;
+}
+
+function buildEmail(){
+  const c1 = $('#cor1').value;
+  const c2 = $('#cor2').value;
+  const bannerImg = $('#bannerImg').value || '';
+  const bannerLink = $('#bannerLink').value || '';
+
+  const utmDate = $('#utmDate').value;
+  const utmPrefix = ($('#utmPrefix').value || 'campanha').trim();
+  const utmCampaign = `${utmPrefix}_${(utmDate? new Date(utmDate):new Date()).toLocaleDateString('pt-BR').replace(/\D/g,'')}`;
+
+  const layout = $('#layout').value;
+
+  const fbUrl = $('#fbUrl').value;
+  const inUrl = $('#inUrl').value;
+  const igUrl = $('#igUrl').value;
+  const waUrl = $('#waUrl').value;
+
+  function withUTM(url, term){
+    if(!url) return '';
+    const hasQ = url.includes('?');
+    const sep = hasQ ? '&' : '?';
+    return `${url}${sep}utm_source=hubspot&utm_medium=email&utm_campaign=${utmCampaign}&utm_content=segmentado&utm_term=${encodeURIComponent(term)}`;
+  }
+
+  // Header com logo fixo (HubSpot)
+  const headerLogo = `
+  <table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3">
+    <tr><td align="center" style="padding:8px 0">
+      <a href="https://www.superbid.net/" target="_blank">
+        <img src="https://49486924.fs1.hubspotusercontent-na1.net/hubfs/49486924/BR%20-%20BANNER/superbid%20exchange%20sbx_vers%C3%A3o%20principal.png" width="227" style="display:block;border:0;max-width:227px;height:auto" alt="Superbid Exchange">
+      </a>
+    </td></tr>
+  </table>`;
+
+  const menu = `
+  <table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3">
+    <tr>
+      <td align="center" style="padding:10px 0">
+        <a href="${withUTM('https://www.superbid.net/categorias/carros-motos','menu_1')}" target="_blank" style="font:700 11px 'Plus Jakarta Sans',Arial;color:#00a0c6;text-decoration:none">CARROS<br>&amp; MOTOS</a>
+      </td>
+      <td align="center">
+        <a href="${withUTM('https://www.superbid.net/categorias/caminhoes-onibus','menu_2')}" target="_blank" style="font:700 11px 'Plus Jakarta Sans',Arial;color:#00a0c6;text-decoration:none">CAMINHÕES<br>&amp; ÔNIBUS</a>
+      </td>
+      <td align="center">
+        <a href="${withUTM('https://www.superbid.net/categorias/maquinas-pesadas-agricolas','menu_3')}" target="_blank" style="font:700 11px 'Plus Jakarta Sans',Arial;color:#00a0c6;text-decoration:none">MÁQUINAS PESADAS<br>&amp; AGRÍCOLAS</a>
+      </td>
+      <td align="center">
+        <a href="${withUTM('https://www.superbid.net/categorias/tecnologia','menu_4')}" target="_blank" style="font:700 11px 'Plus Jakarta Sans',Arial;color:#00a0c6;text-decoration:none">TECNOLOGIA</a>
+      </td>
+    </tr>
+  </table>`;
+
+  const banner = bannerImg? `<table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3"><tr><td><a href="${withUTM(bannerLink,'banner_header')}" target="_blank"><img src="${bannerImg}" width="600" style="display:block;border:0"></a></td></tr></table>`:'';
+
+  // Cards
+  const nodes = [...document.querySelectorAll('#cards .card')];
+  const items = nodes.map((n,i)=>{
+    const link = n.querySelector('.evLink').value.trim();
+    const img  = n.querySelector('.evImg').value.trim();
+    const logo = n.querySelector('.logo').value.trim();
+    const desc = truncate(n.querySelector('.desc').value.trim(), layout==='grid'? 180: 260);
+    const dd   = n.querySelector('.dd').value;
+    const hh   = n.querySelector('.hh').value;
+    const when = fmtDate(dd,hh);
+    const cta  = (n.querySelector('.cta').value||'APROVEITE').trim();
+    const ctaColor = n.querySelector('.ctaColor').value || null;
+    const term = `card_${String(i+1).padStart(2,'0')}`;
+
+    const CTA_STYLE = `display:inline-block;font:600 12px 'Plus Jakarta Sans',Arial;color:#fff;text-decoration:none;border-radius:8px;padding:10px 12px;background:${ctaColor?ctaColor:('linear-gradient(45deg,'+c1+','+c2+')')}`;
+
+    return `
+      <table role="presentation" cellspacing="0" cellpadding="0" width="${layout==='grid'?'183':'580'}" style="background:#fff;border:1px solid #fff">
+        <tr>
+          <td align="center" valign="middle" style="background:#fff">
+            <a href="${withUTM(link,term)}" target="_blank">
+              <img src="${img}" width="${layout==='grid'?'183':'580'}" height="${layout==='grid'?'160':'260'}" style="display:block;border:0">
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td height="42" align="center" valign="middle" style="background:#fff">
+            ${logo? `<a href="${withUTM(link,term)}" target="_blank"><img src="${logo}" height="42" style="display:block;border:0"></a>`:''}
+          </td>
+        </tr>
+        <tr>
+          <td align="center" valign="middle" style="padding:0 10px 6px 10px;background:#fff">
+            <a href="${withUTM(link,term)}" target="_blank" style="font:400 12px 'Plus Jakarta Sans',Arial;color:#000;text-decoration:none;display:block;max-height:${layout==='grid'?'72':'80'}px;overflow:hidden;line-height:18px">${desc}</a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 10px 6px 10px;background:#fff">
+            <table role="presentation"><tr>
+              <td width="30" align="center" valign="middle"><img src="https://lp.superbid.net/wp-content/uploads/hourglass.gif" width="26" style="display:block;border:0"></td>
+              <td valign="middle" style="font:700 13px 'Plus Jakarta Sans',Arial;color:#000">
+                ${when? `Encerramento: <span style="font-weight:700">${when}</span>`:''}
+              </td>
+            </tr></table>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:8px 0 16px 0;background:#fff">
+            <a href="${withUTM(link,term)}" target="_blank" style="${CTA_STYLE}">${cta}</a>
+          </td>
+        </tr>
+      </table>`;
+  });
+
+  // Monta grid/vertical
+  let cardsHtml='';
+  if(layout==='grid'){
+    for(let i=0;i<items.length;i+=3){
+      const slice = items.slice(i,i+3);
+      cardsHtml += `<tr>${slice.map(it=>`<td style="padding:10px">${it}</td>`).join('')}</tr>`;
+    }
+    cardsHtml = `<table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3">${cardsHtml}</table>`;
+  }else{
+    cardsHtml = items.map(it=>`<table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3"><tr><td style="padding:10px">${it}</td></tr></table>`).join('');
+  }
+
+  // Footer (faixa antifraude + Yara + ícones roxos centralizados)
+  const socials = `
+  <table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#8800CB">
+    <tr><td style="font:14px 'Plus Jakarta Sans',Arial,Helvetica,sans-serif;color:#FFFFFF;padding:12px 16px;text-align:center">
+      Não deixe que os golpes atrapalhem suas oportunidades! Não enviamos boletos ou pix por e-mail ou WhatsApp.
+      Encontre as instruções para pagamento em
+      <a href="https://myaccount.superbid.com/" target="_blank" style="color:#f96300;text-decoration:none">minha conta</a>.
+    </td></tr>
+  </table>
+  <table role="presentation" align="center" cellpadding="0" cellspacing="0" width="600" style="margin:auto;background:#f3f3f3">
+    <tr><td align="center" style="padding:12px 0">
+      <a href="${waUrl}" target="_blank">
+        <img src="https://image.leilao.portalsuperbid.net/lib/fe3b11727564047c701675/m/1/1d9b04e6-0fc9-4d86-bd1f-8c5f5d79f366.png" width="600" style="display:block;border:0" alt="Precisa de ajuda? Fale com a Yara">
+      </a>
+    </td></tr>
+    <tr><td align="center" style="padding:8px 0 16px 0">
+      <a href="${fbUrl}" target="_blank" style="margin:0 12px;display:inline-block">
+        <img src="https://image.leilao.portalsuperbid.net/lib/fe3b11727564047c701675/m/1/8e051d87-5805-4330-90d7-1e7be7d9448d.png" width="30" style="border:0" alt="Facebook">
+      </a>
+      <a href="${inUrl}" target="_blank" style="margin:0 12px;display:inline-block">
+        <img src="https://image.leilao.portalsuperbid.net/lib/fe3b11727564047c701675/m/1/01463626-94f7-46bc-b107-562ace05ee89.png" width="30" style="border:0" alt="LinkedIn">
+      </a>
+      <a href="${igUrl}" target="_blank" style="margin:0 12px;display:inline-block">
+        <img src="https://image.leilao.portalsuperbid.net/lib/fe3b11727564047c701675/m/1/c3ed3059-130d-45ab-8965-0c916876e97c.png" width="30" style="border:0" alt="Instagram">
+      </a>
+    </td></tr>
+  </table>`;
+
+  const html = `
+  <!-- HEADER (logo fixo) -->
+  ${headerLogo}
+  <!-- MENU -->
+  ${menu}
+  <!-- BANNER HEADER -->
+  ${banner}
+  <!-- CARDS -->
+  ${cardsHtml}
+  <!-- FOOTER -->
+  ${socials}
+  `;
+
+  // preview
+  $('#visual').innerHTML = html;
+  $('#code').textContent = html.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return html;
+}
+
+$('#gen').onclick = buildEmail;
+$('#copyCode').onclick = ()=>{navigator.clipboard.writeText(document.getElementById('code').innerText)};
+$('#copyVisual').onclick = ()=>{navigator.clipboard.writeText(buildEmail())};
+</script>
+</body>
+</html>
